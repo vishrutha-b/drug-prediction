@@ -1,0 +1,16 @@
+node_modules
+frontend/node_modules
+frontend/.next
+frontend/out
+backend/__pycache__
+backend/tests/__pycache__
+*.pyc
+.git
+.env
+.ipynb_checkpoints
+.vscode
+.idea
+__pycache__
+*.sqlite3
+*.db
+!backend/drug_interaction.db  # Include only if needed for initial bootstrap

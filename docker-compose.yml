@@ -1,0 +1,27 @@
+
+services:
+  intelliinteraction-platform:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: intelliinteraction-app
+    image: intelliinteraction:latest
+    ports:
+      - "8080:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./data/drug_interaction.db
+      - DEBUG=False
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10mb"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  default:
+    name: intelliinteraction-network
