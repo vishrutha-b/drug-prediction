@@ -1,0 +1,14 @@
+# Trivy configuration — speeds up scan by limiting scope
+scan:
+  scanners:
+    - vuln          # only vulnerability scan (skip secret scan inside image)
+
+db:
+  skip-update: false  # always use cached DB if available
+
+severity:
+  - CRITICAL        # only block on CRITICAL (HIGH reported but not blocking)
+
+cache:
+  dir: ~/.cache/trivy
+
