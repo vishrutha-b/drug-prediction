@@ -89,6 +89,8 @@ jobs:
 
       - name: Audit npm dependencies
         working-directory: frontend
+        # --audit-level=high: ignore moderate minimatch vuln in eslint devDeps
+        # (fix requires downgrading eslint to v4 which is a breaking change)
         run: npm audit --audit-level=high
 
   # ─────────────────────────────────────────
