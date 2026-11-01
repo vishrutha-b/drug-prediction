@@ -55,6 +55,7 @@ export default function VisualizerPage() {
   const fgRef = useRef<any>()
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setWindowLoaded(true)
   }, [])
 
