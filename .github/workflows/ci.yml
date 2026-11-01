@@ -8,11 +8,90 @@ on:
 
 jobs:
   # ─────────────────────────────────────────
+  # 🔒 Secret Scanning — blocks leaked keys/tokens
+  # ─────────────────────────────────────────
+  secret-scan:
+    name: Secret Scanning (Gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history needed for leak detection
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ─────────────────────────────────────────
+  # 🔒 Python Dependency Vulnerability Scan
+  # ─────────────────────────────────────────
+  python-security:
+    name: Python Dependency Audit (pip-audit)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      - name: Audit Python dependencies
+        run: pip-audit -r backend/requirements.txt --strict
+
+  # ─────────────────────────────────────────
+  # 🔒 Python SAST — static code security analysis
+  # ─────────────────────────────────────────
+  python-sast:
+    name: Python SAST (Bandit)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Bandit
+        run: pip install bandit
+
+      - name: Run Bandit scan
+        run: bandit -r backend/app -ll -ii --exit-zero
+
+  # ─────────────────────────────────────────
+  # 🔒 Node.js Dependency Vulnerability Scan
+  # ─────────────────────────────────────────
+  node-security:
+    name: Node.js Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Audit npm dependencies
+        working-directory: frontend
+        run: npm audit --audit-level=high
+
+  # ─────────────────────────────────────────
   # Backend (FastAPI) Tests
   # ─────────────────────────────────────────
   backend-tests:
     name: Backend Tests (FastAPI)
     runs-on: ubuntu-latest
+    needs: [secret-scan, python-security, python-sast]
 
     steps:
       - name: Checkout code
@@ -44,6 +123,7 @@ jobs:
   frontend-build:
     name: Frontend Build (Next.js)
     runs-on: ubuntu-latest
+    needs: [secret-scan, node-security]
 
     steps:
       - name: Checkout code
@@ -69,10 +149,10 @@ jobs:
         run: npm run build
 
   # ─────────────────────────────────────────
-  # Docker Compose Build Check
+  # 🔒 Docker Image Vulnerability Scan (Trivy)
   # ─────────────────────────────────────────
-  docker-build:
-    name: Docker Compose Build
+  docker-scan:
+    name: Docker Image Scan (Trivy)
     runs-on: ubuntu-latest
     needs: [backend-tests, frontend-build]
 
@@ -82,4 +162,20 @@ jobs:
 
       - name: Build Docker images
         run: docker compose build --no-cache
+
+      - name: Scan backend image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: drug-prediction-backend
+          format: table
+          exit-code: 1
+          severity: CRITICAL
+
+      - name: Scan frontend image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: drug-prediction-frontend
+          format: table
+          exit-code: 1
+          severity: CRITICAL
 
