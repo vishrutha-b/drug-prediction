@@ -168,21 +168,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build Docker images
+      - name: Build Docker image
         run: docker compose build --no-cache
 
-      - name: Scan backend image with Trivy
+      - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: drug-prediction-backend
-          format: table
-          exit-code: 1
-          severity: CRITICAL
-
-      - name: Scan frontend image with Trivy
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: drug-prediction-frontend
+          image-ref: intelliinteraction:latest
           format: table
           exit-code: 1
           severity: CRITICAL
